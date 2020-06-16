@@ -1,0 +1,36 @@
+---
+title: "webinR_3 Solaria Biodata"
+author: "Akram Méndez"
+date: "2020-06-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Carga de paquetes
+
+```{r}
+library(tidyverse)
+library(plotly)
+```
+
+##  Lectura de datos
+Descargar datos genómicos:
+[datos](https://www.kaggle.com/camnugent/genome-information-for-sequenced-organisms)
+
+```{r}
+eukaryotes<-read_csv("~/Documents/solaria/eukaryotes.csv", col_names = T)
+```
+
+
+```{r}
+eukaryotes
+```
+
+
+```{r}
+eukaryotes %>% group_by(Level) %>% count(Level)
+
+```
+
