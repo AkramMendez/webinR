@@ -15,22 +15,76 @@ library(tidyverse)
 library(plotly)
 ```
 
-##  Lectura de datos
+##  Importación de datos
 Descargar datos genómicos:
 [datos](https://www.kaggle.com/camnugent/genome-information-for-sequenced-organisms)
 
 ```{r}
-eukaryotes<-read_csv("~/Documents/solaria/eukaryotes.csv", col_names = T)
+eukaryotes<-read_csv("data/eukaryotes.csv", col_names = T)
+```
+
+## Exploración y limpieza de datos
+
+```{r}
+eukaryotes %>% glimpse()
+
+```
+
+### Selección de columnas de interés
+```{r}
+eukaryotes %>% select(c("#Organism Name","Organism Groups","Strain","Size(Mb)","GC%","CDS")) -> eukaryotes_subset
+  
+eukaryotes_subset %>% head()
+
+```
+
+### Renombrar columnas
+```{r}
+eukaryotes_subset %>% rename(organism="#Organism Name",groups="Organism Groups",genome_size_mb="Size(Mb)",gc_percent="GC%") %>% rename_with(tolower) -> eukaryotes_subset
+
+eukaryotes_subset %>% head()
+```
+
+### Separar columna "groups" en tres: "domain", "kingdom", "class"
+
+```{r}
+eukaryotes_subset %>% separate(groups,c("domain","kingdom","class"),sep = ";") -> eukaryotes_subset
+
+eukaryotes_subset %>% head()
 ```
 
 
 ```{r}
-eukaryotes
+eukaryotes_subset %>% group_by(kingdom) %>% count()
+
+```
+```{r}
+eukaryotes_subset %>% group_by(kingdom) %>% summarise(mean=mean(genome_size_mb),sd=sd(genome_size_mb),max=max(genome_size_mb),min=min(genome_size_mb))
+```
+
+```{r}
+eukaryotes_subset %>% select(organism,kingdom,class,genome_size_mb) %>%  group_by(kingdom) %>% top_n(.,n = 1,wt = genome_size_mb)
 ```
 
 
 ```{r}
-eukaryotes %>% group_by(Level) %>% count(Level)
-
+eukaryotes_subset %>% ggplot(.,aes(x=kingdom,y=genome_size_mb,color=kingdom)) +
+  geom_point(alpha=0.3) + geom_boxplot(alpha=0.5)
 ```
+```{r}
+eukaryotes_subset %>% filter(genome_size_mb >0 & cds > 0) %>% ggplot(.,aes(x=cds,y=genome_size_mb,color=kingdom, size=cds)) +
+  geom_point(alpha=0.5) -> p
+p
+```
+
+```{r}
+library(plotly)
+library(cowplot)
+options(scipen = 999)
+eukaryotes_subset %>% mutate(genome_size_mb=round(genome_size_mb,2)) %>% ggplot(.,aes(x=kingdom,y=genome_size_mb,color=kingdom,text= paste("organism:",organism,"\ncds:",cds))) +
+  geom_point(alpha=0.7) +theme_cowplot(12) -> p
+
+ggplotly(p, tooltip = c("text","x","y")) %>% config(displayModeBar = F) %>% layout(hoverlabel=list(bgcolor="white"))
+```
+
 
