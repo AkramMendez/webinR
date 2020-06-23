@@ -8,15 +8,16 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## Carga de paquetes
 
+## Carga de paquetes
 ```{r}
 library(tidyverse)
 library(plotly)
+library(cowplot)
 ```
 
 ##  Importación de datos
-Descargar datos genómicos:
+Descargar datos:
 [datos](https://www.kaggle.com/camnugent/genome-information-for-sequenced-organisms)
 
 ```{r}
@@ -53,38 +54,82 @@ eukaryotes_subset %>% separate(groups,c("domain","kingdom","class"),sep = ";") -
 eukaryotes_subset %>% head()
 ```
 
-
+# Visualización de datos
+### ¿Cuántos genomas hay por cada grupo?
 ```{r}
-eukaryotes_subset %>% group_by(kingdom) %>% count()
-
+eukaryotes_subset %>% count(kingdom) %>% arrange(desc(n))
 ```
+
+### Histograma contando el número de obseraciones para una variable:
+```{r}
+eukaryotes_subset %>% ggplot(aes(x=kingdom)) + geom_histogram(stat = "count")
+```
+
+### Podemos hacer la misma gráfica a partir de dos variables (una categórica y otra con valores núméricos): 
+```{r}
+eukaryotes_subset %>% group_by(kingdom) %>% count() %>% ggplot(aes(x=kingdom,y=n)) + 
+  geom_col()
+
+#reordenar
+#Colores (fill, scale_fill_brewer(palette = "Set1"))
+#Añadir capas (p.ej.  coord_flip())
+#Transparencia  
+#etiquetas de los ejes, labs(), (símbolos, ej.: expression(paste("Etiqueta ",mu)))
+# Modificar tema: theme_cowplot()
+```
+
+
+### Explorar tamaños de genoma:
 ```{r}
 eukaryotes_subset %>% group_by(kingdom) %>% summarise(mean=mean(genome_size_mb),sd=sd(genome_size_mb),max=max(genome_size_mb),min=min(genome_size_mb))
 ```
 
+### Gráfica de puntos
 ```{r}
-eukaryotes_subset %>% select(organism,kingdom,class,genome_size_mb) %>%  group_by(kingdom) %>% top_n(.,n = 1,wt = genome_size_mb)
-```
+eukaryotes_subset %>% ggplot(.,aes(x=kingdom,y=genome_size_mb)) +
+  geom_point()
 
 
-```{r}
-eukaryotes_subset %>% ggplot(.,aes(x=kingdom,y=genome_size_mb,color=kingdom)) +
-  geom_point(alpha=0.3) + geom_boxplot(alpha=0.5)
 ```
+
+### Boxplot
+```{r}
+eukaryotes_subset %>% ggplot(.,aes(x=kingdom,y=genome_size_mb)) +
+  geom_point() + geom_boxplot()
+```
+
+### Violin plot
+```{r}
+
+eukaryotes_subset %>% ggplot(.,aes(x=kingdom,y=genome_size_mb)) + geom_violin()
+
+# Zoom, Fungi
+# Ejemplo de etiquetas para el eje y: scale_y_continuous(breaks = seq(0,250,by=30))
+#Añadir observaciones + geom_jitter(width=0.15, alpha=0.3)
+```
+
+### Graficar dos variables (CDS vs Genome size):
 ```{r}
 eukaryotes_subset %>% filter(genome_size_mb >0 & cds > 0) %>% ggplot(.,aes(x=cds,y=genome_size_mb,color=kingdom, size=cds)) +
   geom_point(alpha=0.5) -> p
 p
 ```
-
+### Hacer versión interactiva
 ```{r}
-library(plotly)
-library(cowplot)
-options(scipen = 999)
-eukaryotes_subset %>% mutate(genome_size_mb=round(genome_size_mb,2)) %>% ggplot(.,aes(x=kingdom,y=genome_size_mb,color=kingdom,text= paste("organism:",organism,"\ncds:",cds))) +
-  geom_point(alpha=0.7) +theme_cowplot(12) -> p
+#library(plotly)
+#library(cowplot)
+options(scipen = 999) #Opción para inhabilitar el uso de notación científica (se usará para mostrar los valores decimales en las etiquetas)
+eukaryotes_subset %>% ggplot(.,aes(x=kingdom,y=genome_size_mb,color=kingdom)) +
+  geom_point(alpha=0.7) + geom_boxplot() -> p
 
-ggplotly(p, tooltip = c("text","x","y")) %>% config(displayModeBar = F) %>% layout(hoverlabel=list(bgcolor="white"))
+ggplotly(p) 
+
+# Simplificar etiquetas: mutate(genome_size_mb=round(genome_size_mb,2))
+# Añadir etiquetas a la estética general: text= paste("organism:",organism,"\ncds:",cds)
+#Añadir tema: +theme_cowplot()
+# Elegir campos para presentar en los recuadros: tooltip = c("text","x","y")
+# Modificar menú de gráfica Plotly %>% config(displayModeBar = F) 
+# Modificar fondo de la etiqueta: %>% layout(hoverlabel=list(bgcolor="white"))
 ```
 
 
