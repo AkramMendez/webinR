@@ -24,7 +24,7 @@ Descargar datos:
 [datos](https://www.kaggle.com/camnugent/genome-information-for-sequenced-organisms)
 
 ```{r}
-eukaryotes<-read_csv("data/eukaryotes.csv", col_names = T)
+eukaryotes <- read_csv("data/eukaryotes.csv", col_names = TRUE)
 ```
 
 
@@ -60,7 +60,8 @@ eukaryotes_clean %>% head()
 # Visualización de datos
 ### ¿Cuántos genomas hay por cada grupo?
 ```{r}
-eukaryotes_clean %>% count(kingdom) %>% arrange(desc(n))
+#ctrl + shift +m 
+eukaryotes_clean %>% count(kingdom) %>% arrange(desc(n))   
 ```
 
 ### Explorar tamaños de genoma:
@@ -68,13 +69,11 @@ eukaryotes_clean %>% count(kingdom) %>% arrange(desc(n))
 eukaryotes_clean %>% group_by(kingdom) %>% summarise(mean=mean(genome_size_mb),sd=sd(genome_size_mb),max=max(genome_size_mb),min=min(genome_size_mb))
 ```
 
-
-
 ### Histograma contando el número de observaciones para una variable:
 ```{r}
-# geom_bar(stat = "count") vs geom_col(stat="identity)
+# geom_bar(stat = "count") vs geom_col(stat="identity")
 # count(kingdom)
-eukaryotes_clean  %>%  ggplot(data = ., mapping = aes(x=kingdom, fill=kingdom))
+eukaryotes_clean  %>%  count(kingdom) %>% ggplot(., mapping = aes(x=reorder(kingdom,desc(n)),y=n,fill=kingdom, color=kingdom)) + geom_col(width = 0.001, alpha=0.7) + geom_point(size=4) + scale_fill_brewer(palette = "Set1") + scale_color_brewer(palette = "Set1") + geom_hline(yintercept = 250, color="red") + labs(x="Reino", y="Conteo", title = "Título") + coord_polar() + theme_cowplot() + theme(legend.text = element_text(size=7))
   
 
 # 1. Agrupar y Reordenar
@@ -89,9 +88,11 @@ eukaryotes_clean  %>%  ggplot(data = ., mapping = aes(x=kingdom, fill=kingdom))
 
 ### Podemos hacer la misma gráfica a partir de dos variables (una categórica y otra con valores núméricos): 
 ```{r}
-eukaryotes_clean %>%  ggplot(data = ., mapping = aes(x=class,y=genome_size_mb))
+#eukaryotes_clean %>% count(kingdom) %>% ggplot(data = ., mapping = aes(x=reorder(kingdom,desc(n)),y=n,fill=kingdom)) + geom_col()
+eukaryotes_clean  %>% ggplot(.,aes(x=cds,y=genome_size_mb,fill=kingdom)) + geom_point() + facet_grid(~kingdom)
 
-
+#library(plotly)
+#ggplotly(grafica)
 # 1. Reordenar: reorder()
 # 2. Boxplot: geom_boxplot()
 # 3. Rellenar y cambiar escala de color: fill=, scale_fill_brewer()
@@ -108,17 +109,18 @@ eukaryotes_clean %>%  ggplot(data = ., mapping = aes(x=class,y=genome_size_mb))
 ```{r}
 #Haremos una versión utilizando geom_point en vez de geom_boxplot (para analizar los datos de cada organismo):
 #Definir estructura de las etiquetas: 
-eukaryotes_clean %>%  ggplot(data = ., mapping = aes(x=reorder(class,genome_size_mb),y=genome_size_mb, fill=kingdom)) + 
+eukaryotes_clean %>%  ggplot(data = ., mapping = aes(x=reorder(class,genome_size_mb),y=genome_size_mb, fill=kingdom, text=paste("Clase:", class,"\n Organismo", organism,"\nTamaño de Genoma:", genome_size_mb))) + 
   geom_point(alpha=0.7, color=NA) + #Añadir puntos, color=NA remueve el borde de cada uno
   scale_fill_brewer( palette = "Set1")  + 
   scale_y_log10() +
-  coord_flip() + 
+  coord_flip() + w
   theme_bw() + 
   facet_wrap(~kingdom) +
   labs(x="",y="Genome Size (Mb)", fill="") -> p 
 
+ggplotly(p, tooltip = c("text")) %>% layout(hoverlabel=list(bgcolor="white"))
 
-ggplotly(p)
+#ggplotly(p)
 
 # Añadir etiquetas para cada organismo con información general: 
 # text= paste("Class: ",class,"\nOrganism: ",organism,"\nGenome size (Mb):", genome_size_mb)
