@@ -13,9 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(plotly)
+library(ggthemes)
 library(cowplot)
 ```
-## Ejericio disponible en mi repo: https://github.com/AkramMendez/webinR
+
+## Ejericio disponible en mi repo: https://solariabiodata.github.io/W3bin-R/
 
 ##  Importación de datos
 Descargar datos:
@@ -25,8 +27,8 @@ Descargar datos:
 eukaryotes<-read_csv("data/eukaryotes.csv", col_names = T)
 ```
 
-## Exploración y limpieza de datos
 
+## Exploración y limpieza de datos
 ```{r}
 eukaryotes %>% glimpse()
 
@@ -70,10 +72,12 @@ eukaryotes_clean %>% group_by(kingdom) %>% summarise(mean=mean(genome_size_mb),s
 
 ### Histograma contando el número de observaciones para una variable:
 ```{r}
-# geom_bar(stat = "count") 
-eukaryotes_clean %>% ggplot(data = ., mapping = aes(x=kingdom)) + geom_bar() 
+# geom_bar(stat = "count") vs geom_col(stat="identity)
+# count(kingdom)
+eukaryotes_clean  %>%  ggplot(data = ., mapping = aes(x=kingdom, fill=kingdom))
+  
 
-# 1. Reordenar
+# 1. Agrupar y Reordenar
 # 2. Rellenar
 # 3. Modificar colores (fill, scale_fill_brewer(palette = "Set1"))
 # 3. Añadir capas (p.ej. geom_hline)
@@ -97,9 +101,10 @@ eukaryotes_clean %>%  ggplot(data = ., mapping = aes(x=class,y=genome_size_mb))
 # 7. Graficar por grupo: facet_wrap()
 # 8. Asignar a una variable
 # p. Versión interactiva con Plotly: ggplotly
+
 ```
 
-### Hacer versión interactiva, etiquetado
+### Hacer versión interactiva modificando las etiquetas:
 ```{r}
 #Haremos una versión utilizando geom_point en vez de geom_boxplot (para analizar los datos de cada organismo):
 #Definir estructura de las etiquetas: 
